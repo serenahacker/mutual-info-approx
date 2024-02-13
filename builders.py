@@ -1,5 +1,4 @@
 from models.set import *
-from models.conv import *
 
 
 #
