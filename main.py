@@ -20,7 +20,6 @@ def parse_args():
     parser.add_argument('run_name', type=str)
     parser.add_argument('entity', type=str)
     parser.add_argument('--basedir', type=str, default="./runs")
-    parser.add_argument('--dataset_dir', type=str, default='./data')
     parser.add_argument('--checkpoint_dir', type=str, default=None)
 
     # Run config
@@ -57,7 +56,6 @@ def parse_args():
     parser.add_argument('--n', type=int, default=8)
     parser.add_argument('--normalize', type=str, choices=('none', 'scale-linear', 'scale-inv', 'whiten'))
     parser.add_argument('--scaling', type=float, default=0.5)
-    parser.add_argument('--blur', type=float, default=0.05)
     parser.add_argument('--equi', action='store_true')
     parser.add_argument('--vardim', action='store_true')
     parser.add_argument('--max_rho', type=float, default=0.999)
@@ -101,9 +99,7 @@ if __name__ == '__main__':
     task = TASKS[args.task](args)
     train_dataset, val_dataset, test_dataset = task.build_dataset()
 
-    pretrained_model = None
-
-    model = task.build_model(pretrained_model=pretrained_model).to(device)
+    model = task.build_model().to(device)
 
     if torch.cuda.device_count() > 1:
         n_gpus = torch.cuda.device_count()

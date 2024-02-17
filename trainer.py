@@ -9,7 +9,7 @@ import os
 
 import wandb
 
-from utils import whiten_split, batched_cov
+from utils import whiten_split, batched_cov, batched_shuffle
 
 SS_SCHEDULE_15=[{'set_size':(1,5), 'steps':20000}, {'set_size':(3,10), 'steps':5000}, {'set_size':(8,15), 'steps':5000}]
 SS_SCHEDULE_30=[{'set_size':(1,5), 'steps':20000}, {'set_size':(3,10), 'steps':5000}, {'set_size':(8,15), 'steps':5000}, {'set_size':(10,30), 'steps':5000}]
@@ -199,7 +199,7 @@ class StatisticalDistanceTrainer(Trainer):
         model_losses=[]
         baseline_losses={baseline:[] for baseline in self.baselines.keys()}
         with torch.no_grad():
-            for i in tqdm.tqdm(range(steps)):
+            for i in range(steps):
                 if self.exact_loss:
                     X, theta = dataset(args['batch_size'], **args['sample_kwargs'])
                     labels = self.label_fct(*theta, X=X[0], **args['label_kwargs']).squeeze(-1)
@@ -378,8 +378,6 @@ class DonskerVaradhanMITrainer(Trainer):
         return X.sum(dim=1)/X.size(1) - Y.logsumexp(dim=1) + math.log(Y.size(1))
 
 
-
-
     def _forward(self, X, Y):
         if self.split_inputs:
             X0, X1 = X.chunk(2, dim=1)
@@ -506,6 +504,7 @@ class DonskerVaradhanMITrainer(Trainer):
 #
 #   DV2
 #
+'''
 from utils import batched_shuffle
 
 class DonskerVaradhanTrainer2(Trainer):
@@ -643,5 +642,6 @@ class DonskerVaradhanTrainer2(Trainer):
         
         return metrics
 
+'''
 
 

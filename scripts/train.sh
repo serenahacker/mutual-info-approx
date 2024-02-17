@@ -11,11 +11,11 @@ basedir="MI-Runs"
 run_name=$1
 entity=$2
 
-checkpoint_dir="./checkpoint/$USER/$run_name"
+checkpoint_dir="./checkpoint/$USER/$run_name/MI"
 
 model='multi-set-transformer'
 dataset='corr'
-task='stat/DV'
+task='stat/MI'
 
 bs=32
 lr="1e-5"

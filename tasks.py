@@ -1,6 +1,6 @@
 
 from builders import SET_MODEL_BUILDERS
-from trainer import Trainer, StatisticalDistanceTrainer, DonskerVaradhanTrainer, DonskerVaradhanMITrainer, DonskerVaradhanTrainer2
+from trainer import Trainer, StatisticalDistanceTrainer, DonskerVaradhanTrainer, DonskerVaradhanMITrainer#, DonskerVaradhanTrainer2
 from datasets.distributions import CorrelatedGaussianGenerator, GaussianGenerator, NFGenerator, StandardGaussianGenerator, CorrelatedGaussianGenerator2, LabelledGaussianGenerator, RandomEncoderGenerator, ProtectedDatasetGenerator
 from models.set import MultiSetTransformerEncoder, MultiSetTransformerEncoderDecoder
 from utils import kl_mc, kl_mc_mixture, mi_corr_gaussian, kl_knn, kraskov_mi1
@@ -12,12 +12,11 @@ import math
 
 
 class Task():
-    pretraining_task=None
     trainer_cls=Trainer
     def __init__(self, args):
         self.args = args
 
-    def build_model(self, pretrained_model=None):
+    def build_model(self):
         return SET_MODEL_BUILDERS[self.args.model](self.args)
     
     def build_dataset(self):
@@ -62,7 +61,7 @@ LOSSES = {
 class StatisticalDistanceTask(Task):
     trainer_cls = StatisticalDistanceTrainer
 
-    def build_model(self, pretrained_model=None):
+    def build_model(self):
         self.args.input_size = self.args.n
         return super().build_model()
 
@@ -218,7 +217,7 @@ class DVTask(StatisticalDistanceTask):
         set_model = MultiSetTransformerEncoderDecoder(n, n, self.args.latent_size, self.args.hidden_size, 1, **model_kwargs)
         return set_model
     
-    def build_model(self, pretrained_model=None):
+    def build_model(self):
         return self._build_model_encdec()
 
 
@@ -334,7 +333,7 @@ class DVMITask(StatisticalDistanceTask):
         set_model = MultiSetTransformerEncoderDecoder(input_size, input_size, self.args.latent_size, self.args.hidden_size, 1, **model_kwargs)
         return set_model
 
-    def build_model(self, pretrained_model=None):
+    def build_model(self):
         if self.args.dv_model == 'mst':
             return self._build_model_mst()
         else:
@@ -429,7 +428,7 @@ class DVTask2(StatisticalDistanceTask):
         return set_model
     
     
-    def build_model(self, pretrained_model=None):
+    def build_model(self):
         if self.args.dv_model == 'encdec':
             return self._build_model_encdec()
         else:
