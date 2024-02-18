@@ -11,54 +11,78 @@ basedir="MI-Runs"
 run_name=$1
 entity=$2
 
-checkpoint_dir="./checkpoint/$USER/$run_name/MI"
+checkpoint_dir="./checkpoint/$USER/$run_name/DV-MI"
 
-model='multi-set-transformer'
+# stat/MI for supervised, stat/DV-MI for unsupervised
+task='stat/DV-MI'
+
+###     data parameters
+# 'corr' for synthetic gaussian data, 'adult' for adult dataset
 dataset='corr'
-task='stat/MI'
+# dimensionality of the data
+n=8
+# correlations go from -max_rho to +max_rho for 'corr' dataset
+max_rho=0.9
 
+###     general training parameters
 bs=32
+# lr 1e-4 for supervised or 1e-5 for unsupervised
 lr="1e-5"
+# total number of training steps as well as how often to evaluate/save and how many steps to perform for evaluation
+train_steps=100000
+eval_every=500
+save_every=2000
+val_steps=200
+test_steps=500
+# whether or not to use amp acceleration
+use_amp=0
+
+## set size parameters
+# set sizes go from ss1 to ss2
 ss1=250
 ss2=350
 ss_schedule=-1
-eval_every=500
-save_every=2000
-train_steps=100000
-val_steps=200
-test_steps=500
-use_amp=0
 
-weight_decay=0.01
+
+weight_decay=0
 grad_clip=-1
 
-num_blocks=4
-num_heads=4
+
+###     general model parameters
 ls=16
 hs=32
-dropout=0
+num_heads=4
 decoder_layers=1
+dropout=0
+ln=0
+# 'none' or 'whiten'
+normalize='none'
+
 weight_sharing='none'
 
-n=8
-
-normalize='none'
+# these parameters control the dimension equivariance. 
+# they should usually be set to the same value: 1 to use it or 0 to not use it
 equi=1
 vardim=1
 
-split_inputs=1
-decoder_self_attn=0
+###     supervised parameters
+model='multi-set-transformer'
+num_blocks=4
+
+###     unsupervised parameters
+dv_model='encdec'
 enc_blocks=4
 dec_blocks=1
-ln=0
-max_rho=0.9
+eps="1e-6"
 
-estimate_size=-1
-criterion=''
-dv_model='encdec'
+scale='logcov'
 sample_marg=1
-scale='none'
-eps="1e-8"
+estimate_size=-1
+split_inputs=1
+decoder_self_attn=0
+
+criterion=''
+
 
 argstring="$run_name $entity --basedir $basedir --checkpoint_dir $checkpoint_dir \
     --model $model --dataset $dataset --task $task --batch_size $bs --lr $lr --set_size $ss1 $ss2 \

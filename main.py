@@ -6,8 +6,6 @@ from torch.utils.tensorboard import SummaryWriter
 
 import argparse
 import os
-import shutil
-from datetime import date
 
 from tasks import TASKS
 from builders import SET_MODEL_BUILDERS
