@@ -815,7 +815,7 @@ class MultiSetTransformerEncoderDecoder(nn.Module):
         if x_size != latent_size:
             self.proj_x = nn.Linear(x_size, latent_size)
         if ab_size != latent_size:
-            if weight_sharing is not "none":
+            if weight_sharing != "none":
                 proj = nn.Linear(ab_size, latent_size)
                 self.proj_a, self.proj_b = proj, proj
             else:

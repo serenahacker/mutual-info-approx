@@ -109,7 +109,7 @@ if __name__ == '__main__':
         args.test_steps = args.test_steps // n_gpus 
 
     opt = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    scaler = torch.cuda.amp.GradScaler(enabled=args.use_amp)
+    # scaler = torch.cuda.amp.GradScaler(enabled=args.use_amp)
 
     logger = SummaryWriter(log_dir)
     wandb.init(entity=args.entity, project=args.run_name)

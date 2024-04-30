@@ -1,7 +1,7 @@
 
 from builders import SET_MODEL_BUILDERS
 from trainer import Trainer, StatisticalDistanceTrainer, DonskerVaradhanTrainer, DonskerVaradhanMITrainer#, DonskerVaradhanTrainer2
-from datasets.distributions import CorrelatedGaussianGenerator, GaussianGenerator, NFGenerator, StandardGaussianGenerator, CorrelatedGaussianGenerator2, LabelledGaussianGenerator, RandomEncoderGenerator, ProtectedDatasetGenerator
+from datasets.distributions import CorrelatedGaussianGenerator, GaussianGenerator, NFGenerator, StandardGaussianGenerator, CorrelatedGaussianGenerator2, LabelledGaussianGenerator, RandomEncoderGenerator, RandomEncoderGenerator2, ProtectedDatasetGenerator
 from models.set import MultiSetTransformerEncoder, MultiSetTransformerEncoderDecoder
 from utils import kl_mc, kl_mc_mixture, mi_corr_gaussian, kl_knn, kraskov_mi1
 
@@ -232,13 +232,32 @@ class DVMITask(StatisticalDistanceTask):
             generator = LabelledGaussianGenerator(return_params=True, variable_dim=self.args.equi)
         elif self.args.dataset == 'adult':
             generator = ProtectedDatasetGenerator.from_adult(return_params=True)
-        elif self.args.dataset == 'adult-rand':
+        elif self.args.dataset == 'adult-rand-zu':
             model_kwargs={
                 'in_features': 102,
                 'hidden_dim': 100,
                 'activation': nn.ReLU(),
             }
             generator = RandomEncoderGenerator.from_adult(model_kwargs, return_params=True, variable_dim=self.args.equi)
+        elif self.args.dataset == 'adult-rand-xz':
+            model_kwargs={
+                'in_features': 102,
+                'hidden_dim': 100,
+                'activation': nn.ReLU(),
+            }
+            generator = RandomEncoderGenerator.from_adult(model_kwargs, return_params=True, variable_dim=self.args.equi, return_XZ=True)
+        elif self.args.dataset == 'adult-rand-zu-2':
+            model_kwargs={
+                'x_concat_u_size': 102 + 1,
+                'hidden_size': 50,
+            }
+            generator = RandomEncoderGenerator2.from_adult(model_kwargs, return_params=True, variable_dim=self.args.equi)
+        elif self.args.dataset == 'adult-rand-xz-2':
+            model_kwargs={
+                'x_concat_u_size': 102 + 1,
+                'hidden_size': 50,
+            }
+            generator = RandomEncoderGenerator2.from_adult(model_kwargs, return_params=True, variable_dim=self.args.equi, return_XZ=True)
         else:
             raise NotImplementedError("corr or mixture")
         return generator, generator, None
@@ -279,7 +298,7 @@ class DVMITask(StatisticalDistanceTask):
             trainer_kwargs['y_marginal'] = None
             trainer_kwargs['sample_marg'] = False
             trainer_kwargs['label_fct'] = None
-        elif self.args.dataset == 'adult-rand':
+        elif 'adult-rand' in self.args.dataset:
             trainer_kwargs['x_marginal'] = None
             trainer_kwargs['y_marginal'] = None
             trainer_kwargs['sample_marg'] = False
@@ -304,8 +323,10 @@ class DVMITask(StatisticalDistanceTask):
         }
         if self.args.dataset == 'corr':
             x_size, y_size = self.args.n, self.args.n
-        elif self.args.dataset == 'mixture' or self.args.dataset == 'adult-rand':
+        elif self.args.dataset == 'mixture' or 'adult-rand-zu' in self.args.dataset:
             x_size, y_size = self.args.n, 1
+        elif 'adult-rand-xz' in self.args.dataset:
+            x_size, y_size = 102, self.args.n
         elif self.args.dataset == 'adult':
             x_size, y_size = 102, 1
         set_model = MultiSetTransformerEncoder(x_size, y_size, self.args.latent_size, self.args.hidden_size, 1, **model_kwargs)
@@ -326,8 +347,10 @@ class DVMITask(StatisticalDistanceTask):
         }
         if self.args.dataset == 'corr':
             input_size = self.args.n * 2
-        elif self.args.dataset == 'mixture' or self.args.dataset == 'adult-rand':
+        elif self.args.dataset == 'mixture' or 'adult-rand-zu' in self.args.dataset:
             input_size = self.args.n + 1
+        elif 'adult-rand-xz' in self.args.dataset:
+            input_size = 102 + self.args.n 
         elif self.args.dataset == 'adult':
             input_size = 102 + 1
         set_model = MultiSetTransformerEncoderDecoder(input_size, input_size, self.args.latent_size, self.args.hidden_size, 1, **model_kwargs)

@@ -96,7 +96,7 @@ class Trainer():
                     initial_step, metrics = self.load_checkpoint()
 
         avg_loss = 0
-        loss_fct = nn.BCEWithLogitsLoss()
+        # loss_fct = nn.BCEWithLogitsLoss()
         for i in tqdm.tqdm(range(initial_step, train_steps)):
             if self.ss_schedule is not None:
                 set_size = self.ss_schedule.get_set_size(i)

@@ -428,7 +428,7 @@ class ProtectedDatasetGenerator():
         self.base_dataset = base_dataset
         self.return_params = return_params
 
-    def _generate(self, batch_size, set_size=(100,150), sample_groups=1):
+    def _generate(self, batch_size, set_size=(100,150), sample_groups=1, **kwargs):
         indices = torch.randperm(len(self.base_dataset))
         n_samples = torch.randint(*set_size, (1,))
         X, Y, _ = zip(*[self.base_dataset[x] for x in indices[:batch_size*n_samples*sample_groups]])
@@ -455,12 +455,12 @@ class RandomEncoderGenerator():
         train_dataset, _ = load_adult(dir)
         return cls(train_dataset, model_kwargs, **kwargs)
 
-    def __init__(self, base_dataset, model_kwargs, return_params=False, variable_dim=False):
+    def __init__(self, base_dataset, model_kwargs, return_params=False, variable_dim=False, return_XZ=False):
         self.base_dataset = base_dataset
         self.model_kwargs = model_kwargs
         self.return_params = return_params
         self.variable_dim=variable_dim
-
+        self.return_XZ = return_XZ
     
     def _generate(self, batch_size, n, set_size=(100,150), sample_groups=1):
         model = VariationalMLP(**self.model_kwargs, z_dim=n).cuda()
@@ -475,11 +475,64 @@ class RandomEncoderGenerator():
             X = model(batch.cuda())[0]
         X = X.view(batch_size, n_samples * sample_groups, -1)
         Y = Y.view(batch_size, n_samples * sample_groups, 1)
+        batch = batch.view(batch_size, n_samples * sample_groups, -1)
         
         if self.return_params:
-            return (X,Y), None
+            if self.return_XZ:
+                return (batch, X), None # X, Z
+            return (X,Y), None # Z, U 
         else:
-            return X, Y
+            if self.return_XZ:
+                return batch, X # X, Z
+            return X, Y # Z, U 
+
+    def __call__(self, batch_size, dims=(25,50), sample_groups=1, **kwargs):
+        if self.variable_dim:
+            n = torch.randint(*dims,(1,)).item()
+            kwargs['n'] = n
+        return self._generate(batch_size, sample_groups=sample_groups, **kwargs)
+
+
+from models.fairness import QPhi
+class RandomEncoderGenerator2():
+    @classmethod
+    def from_adult(cls, model_kwargs, dir='./data/adult', **kwargs):
+        train_dataset, _ = load_adult(dir)
+        return cls(train_dataset, model_kwargs, **kwargs)
+
+    def __init__(self, base_dataset, model_kwargs, return_params=False, variable_dim=False, return_XZ=False):
+        self.base_dataset = base_dataset
+        self.model_kwargs = model_kwargs
+        self.return_params = return_params
+        self.variable_dim=variable_dim
+        self.return_XZ = return_XZ
+    
+    def _generate(self, batch_size, n, set_size=(100,150), sample_groups=1):
+        model = QPhi(**self.model_kwargs, z_size=n).cuda()
+
+        indices = torch.randperm(len(self.base_dataset))
+        n_samples = torch.randint(*set_size, (1,))
+        batch, Y, _ = zip(*[self.base_dataset[x] for x in indices[:batch_size*n_samples*sample_groups]])
+        batch = torch.stack(batch, dim=0)
+        Y = torch.stack(Y, dim=0)
+
+        inp = torch.cat([batch, Y], dim=-1)
+
+        with torch.no_grad():
+            X = model(inp.cuda())
+
+        X = X.view(batch_size, n_samples * sample_groups, -1)
+        Y = Y.view(batch_size, n_samples * sample_groups, 1)
+        batch = batch.view(batch_size, n_samples * sample_groups, -1)
+        
+        if self.return_params:
+            if self.return_XZ:
+                return (batch, X), None # X, Z
+            return (X,Y), None # Z, U 
+        else:
+            if self.return_XZ:
+                return batch, X # X, Z
+            return X, Y # Z, U 
 
     def __call__(self, batch_size, dims=(25,50), sample_groups=1, **kwargs):
         if self.variable_dim:
